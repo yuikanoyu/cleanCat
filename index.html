@@ -1,0 +1,779 @@
+<html>
+<head>
+</head>
+<style type="text/css">
+body {
+/* clean_cat.html -> index.html */
+/* GitHub Pages URL -> https://yuikanoyu.github.io/cleanCat/  */
+/* http://free-illustrations.gatag.net/2014/03/08/030000.html */
+  background-image: url("yuka.png");
+  background-repeat: repeat;
+  background-attachment: fixed;
+  background-position: right top
+}
+</style>
+
+<script type="text/javascript">
+
+var myTamaWidth = 200;   // 画像の幅(ピクセル)
+var myTamaHeight = 200;   // 画像の高さ(ピクセル)
+
+var myX = 0;  // 玉の現在位置(X)
+var myY = 0;  // 玉の現在位置(Y)
+var myXs = 0; // 玉の開始位置(X)
+var myYs = 0; // 玉の開始位置(Y)
+var myXe = 0; // 玉の最終位置(X)
+var myYe = 0; // 玉の最終位置(Y)
+
+var dog_style = 0;
+var interval_time = 0;
+
+var init = 0;         //初期設定 0:未処理　/ 1:処理済み
+var unko_cnt = 0;     //処理を行うUKの番号
+var unko_limit = 0;   //現在出現しているUKの数
+var neko_next_unko = 0;  //ねこが向かうUKの番号
+
+var directionX; //ロボットが向かうX軸方向 0:右側 / 1:左側　/ 2:同軸
+var directionY; //ロボットが向かうY軸方向 0:下側 / 1:上側　/ 2:同軸
+
+var dog_direction = 0; //犬の向き 0:右向き/ 1:左向き
+
+var uk_now = 0;       //0:UKしていない / 1:UKなう
+var clean_now = 0;    //0:掃除していない/ 1:掃除なう
+
+var neko_info = [0,0]; //値の初期化
+
+var unko_info = [  //値の初期化
+// X,Y
+  [0,0],//unko_1のX座標,Y座標
+  [0,0],//unko_2のX座標,Y座標
+  [0,0],//unko_3のX座標,Y座標
+  [0,0],//unko_4のX座標,Y座標
+  [0,0],//unko_5のX座標,Y座標
+  [0,0],//unko_6のX座標,Y座標
+  [0,0],//unko_7のX座標,Y座標
+  [0,0],//unko_8のX座標,Y座標
+  [0,0],//unko_9のX座標,Y座標
+  [0,0],//unko_10のX座標,Y座標
+  [0,0],//unko_11のX座標,Y座標
+  [0,0],//unko_12のX座標,Y座標
+  [0,0],//unko_13のX座標,Y座標
+  [0,0],//unko_14のX座標,Y座標
+  [0,0],//unko_15のX座標,Y座標
+  [0,0],//unko_16のX座標,Y座標
+  [0,0],//unko_17のX座標,Y座標
+  [0,0],//unko_18のX座標,Y座標
+  [0,0],//unko_19のX座標,Y座標
+  [0,0],//unko_20のX座標,Y座標
+  [0,0],//unko_21のX座標,Y座標
+  [0,0],//unko_22のX座標,Y座標
+  [0,0],//unko_23のX座標,Y座標
+  [0,0],//unko_24のX座標,Y座標
+  [0,0],//unko_25のX座標,Y座標
+  [0,0],//unko_26のX座標,Y座標
+  [0,0],//unko_27のX座標,Y座標
+  [0,0],//unko_28のX座標,Y座標
+  [0,0],//unko_29のX座標,Y座標
+  [0,0] //unko_30のX座標,Y座標
+];
+
+function change_dog( num ){
+  interval_time++;
+  if(( dog_style != num ) || ( interval_time >= 80 )) {
+    interval_time = 0;
+    switch( num ){
+      case 0:
+        document.getElementById("tama_img").src = "dog/0.gif";
+        break;
+      case 1:
+        document.getElementById("tama_img").src = "dog/1.gif";
+        break;
+      case 2:
+        document.getElementById("tama_img").src = "dog/2.png";
+        break;
+      default:
+        //do nothing
+        break;
+      }
+  }
+  dog_style = num;
+}
+
+function change_cat( num ){
+  switch( num ){
+    case 0:
+      document.getElementById("neko_img").src = "cat/0.png";
+      break;
+    case 1:
+      document.getElementById("neko_img").src = "cat/1.png";
+      break;
+    default:
+      //do nothing
+      break;
+  }
+}
+
+//いぬ画像の更新
+function update_img(){
+  if( uk_now != 0 ){
+    change_dog(2);
+  }else if( dog_direction != 0 ){
+    change_dog(1);
+  }else{
+    change_dog(0);
+  }
+
+  //ねこ画像の更新
+  if(( neko_info[0] == 0 ) && ( neko_info[1] == 0 )){
+    change_cat(0);
+  }else if( clean_now != 0 ){
+    change_cat(0);
+  }else if( unko_limit == 0 ){
+    change_cat(1);
+  }else{
+    change_cat(0);
+  }
+}
+
+function myTamaMain(){
+  if(init == 0 ){//初期設定
+    //UK1~5を非表示設定
+    document.getElementById("unko_1").style.visibility="hidden";
+    document.getElementById("unko_2").style.visibility="hidden";
+    document.getElementById("unko_3").style.visibility="hidden";
+    document.getElementById("unko_4").style.visibility="hidden";
+    document.getElementById("unko_5").style.visibility="hidden";
+    document.getElementById("unko_6").style.visibility="hidden";
+    document.getElementById("unko_7").style.visibility="hidden";
+    document.getElementById("unko_8").style.visibility="hidden";
+    document.getElementById("unko_9").style.visibility="hidden";
+    document.getElementById("unko_10").style.visibility="hidden";
+    document.getElementById("unko_11").style.visibility="hidden";
+    document.getElementById("unko_12").style.visibility="hidden";
+    document.getElementById("unko_13").style.visibility="hidden";
+    document.getElementById("unko_14").style.visibility="hidden";
+    document.getElementById("unko_15").style.visibility="hidden";
+    document.getElementById("unko_16").style.visibility="hidden";
+    document.getElementById("unko_17").style.visibility="hidden";
+    document.getElementById("unko_18").style.visibility="hidden";
+    document.getElementById("unko_19").style.visibility="hidden";
+    document.getElementById("unko_20").style.visibility="hidden";
+    document.getElementById("unko_21").style.visibility="hidden";
+    document.getElementById("unko_22").style.visibility="hidden";
+    document.getElementById("unko_23").style.visibility="hidden";
+    document.getElementById("unko_24").style.visibility="hidden";
+    document.getElementById("unko_25").style.visibility="hidden";
+    document.getElementById("unko_26").style.visibility="hidden";
+    document.getElementById("unko_27").style.visibility="hidden";
+    document.getElementById("unko_28").style.visibility="hidden";
+    document.getElementById("unko_29").style.visibility="hidden";
+    document.getElementById("unko_30").style.visibility="hidden";
+    document.getElementById("neko").style.visibility="visible";
+    init = 1; //初期設定完了
+  }
+
+  //画像の更新
+  update_img();
+
+  //変数に要素を紐付け?
+  myObj=document.getElementById("tama").style;
+  unko_obj_1=document.getElementById("unko_1").style;
+  unko_obj_2=document.getElementById("unko_2").style;
+  unko_obj_3=document.getElementById("unko_3").style;
+  unko_obj_4=document.getElementById("unko_4").style;
+  unko_obj_5=document.getElementById("unko_5").style;
+  unko_obj_6=document.getElementById("unko_6").style;
+  unko_obj_7=document.getElementById("unko_7").style;
+  unko_obj_8=document.getElementById("unko_8").style;
+  unko_obj_9=document.getElementById("unko_9").style;
+  unko_obj_10=document.getElementById("unko_10").style;
+  unko_obj_11=document.getElementById("unko_11").style;
+  unko_obj_12=document.getElementById("unko_12").style;
+  unko_obj_13=document.getElementById("unko_13").style;
+  unko_obj_14=document.getElementById("unko_14").style;
+  unko_obj_15=document.getElementById("unko_15").style;
+  unko_obj_16=document.getElementById("unko_16").style;
+  unko_obj_17=document.getElementById("unko_17").style;
+  unko_obj_18=document.getElementById("unko_18").style;
+  unko_obj_19=document.getElementById("unko_19").style;
+  unko_obj_20=document.getElementById("unko_20").style;
+  unko_obj_21=document.getElementById("unko_21").style;
+  unko_obj_22=document.getElementById("unko_22").style;
+  unko_obj_23=document.getElementById("unko_23").style;
+  unko_obj_24=document.getElementById("unko_24").style;
+  unko_obj_25=document.getElementById("unko_25").style;
+  unko_obj_26=document.getElementById("unko_26").style;
+  unko_obj_27=document.getElementById("unko_27").style;
+  unko_obj_28=document.getElementById("unko_28").style;
+  unko_obj_29=document.getElementById("unko_29").style;
+  unko_obj_30=document.getElementById("unko_30").style;
+  neko_obj=document.getElementById("neko").style;
+
+  //犬の移動範囲
+  myXs = document.body.scrollLeft;
+  myYs = document.body.scrollTop;
+  myXe = myXs +document.body.clientWidth - myTamaWidth;
+  myYe = myYs + document.body.clientHeight - myTamaHeight;
+  // 犬の移動角度(方向)を決める
+	//現在位置が開始位置より小さい時　X座標インクリメント(左端)
+  if (myX<=myXs){
+    dog_direction = 0;
+    myAddX = Math.floor(Math.random()*2)+1;
+  }
+	//現在位置が開始位置より大きい時　Y座標インクリメント(上端)
+	if (myY<=myYs){
+    myAddY = Math.floor(Math.random()*2)+1;
+  }
+	//現在位置が最終位置より小さい時　X座標ディクリメント(右端)
+	if (myX>=myXe){
+    dog_direction = 1;
+    myAddX = (Math.floor(Math.random()*2)+1)*(-1);
+  }
+  //現在位置が最終位置より大きい時　Y座標ディクリメント(下端)
+	if (myY>=myYe){
+    myAddY = (Math.floor(Math.random()*2)+1)*(-1);
+  }
+
+  // UKなうじゃないとき移動
+  if( uk_now == 0 ){
+    UK_move();
+  }
+  nekorobot();
+}
+
+
+function UK_move(){
+  myX = myX + myAddX;
+  if      (myX < myXs) myX=myXs;
+  else if (myX > myXe) myX=myXe;
+
+  myY = myY + myAddY;
+  if      (myY < myYs) myY=myYs;
+  else if (myY > myYe) myY=myYe;
+
+  myObj.left = myX;
+  myObj.top  = myY;
+}
+
+//ねこル〇バ処理
+function nekorobot(){
+  if( unko_limit > 0 ){
+    run_robot();//UKに移動
+  }else{
+    turn_home();//homeに戻る
+  }
+}
+
+function run_robot(){
+
+  //左右の判定
+  if( unko_info[neko_next_unko][0] > neko_info[0]){
+    //UKがロボットから見て右側
+    directionX = 0;
+  }else if( unko_info[neko_next_unko][0] < neko_info[0] ){
+    //UKがロボットから見て左側
+    directionX = 1;
+  }else{
+    directionX = 2;
+  }
+
+  //上下の判定
+  if( unko_info[neko_next_unko][1] > neko_info[1]){
+    //UKがロボットから見て下側
+    directionY = 0;
+  }else if( unko_info[neko_next_unko][1] < neko_info[1] ){
+    //UKがロボットから見て上側
+    directionY = 1;
+  }else{
+    directionY = 2;
+  }
+
+  //ねこの移動
+if( clean_now == 0 ){
+    switch( directionX ){
+      case 0:
+        neko_info[0] = neko_info[0] + 1;
+        break;
+      case 1:
+        neko_info[0] = neko_info[0] - 1;
+        break;
+      default:
+        //do nothing
+        break;
+    }
+    switch( directionY ){
+      case 0:
+        neko_info[1] = neko_info[1] + 1;
+        break;
+      case 1:
+        neko_info[1] = neko_info[1] - 1;
+        break;
+      default:
+        //do nothing
+        break;
+    }
+  }
+
+  function neko_check(){
+    clean_now = 0;
+  }
+
+  //UKの位置とねこの位置が重なった時
+  if (( neko_info[0] == unko_info[neko_next_unko][0])
+  && (neko_info[1] == unko_info[neko_next_unko][1])){
+
+    clean_now = 1;
+    var nekoout = setTimeout(neko_check , 1750);
+
+    switch( neko_next_unko ){
+      case 0:
+        neko_next_unko = 1;
+        document.getElementById("unko_1").style.visibility="hidden";
+        break;
+      case 1:
+        neko_next_unko = 2;
+        document.getElementById("unko_2").style.visibility="hidden";
+        break;
+      case 2:
+        neko_next_unko = 3;
+        document.getElementById("unko_3").style.visibility="hidden";
+        break;
+      case 3:
+        neko_next_unko = 4;
+        document.getElementById("unko_4").style.visibility="hidden";
+        break;
+      case 4:
+        neko_next_unko = 5;
+        document.getElementById("unko_5").style.visibility="hidden";
+        break;
+      case 5:
+        neko_next_unko = 6;
+        document.getElementById("unko_6").style.visibility="hidden";
+        break;
+      case 6:
+        neko_next_unko = 7;
+        document.getElementById("unko_7").style.visibility="hidden";
+        break;
+      case 7:
+        neko_next_unko = 8;
+        document.getElementById("unko_8").style.visibility="hidden";
+        break;
+      case 8:
+        neko_next_unko = 9;
+        document.getElementById("unko_9").style.visibility="hidden";
+        break;
+      case 9:
+        neko_next_unko = 10;
+        document.getElementById("unko_10").style.visibility="hidden";
+        break;
+      case 10:
+        neko_next_unko = 11;
+        document.getElementById("unko_11").style.visibility="hidden";
+        break;
+      case 11:
+        neko_next_unko = 12;
+        document.getElementById("unko_12").style.visibility="hidden";
+        break;
+      case 12:
+        neko_next_unko = 13;
+        document.getElementById("unko_13").style.visibility="hidden";
+        break;
+      case 13:
+        neko_next_unko = 14;
+        document.getElementById("unko_14").style.visibility="hidden";
+        break;
+      case 14:
+        neko_next_unko = 15;
+        document.getElementById("unko_15").style.visibility="hidden";
+        break;
+      case 15:
+        neko_next_unko = 16;
+        document.getElementById("unko_16").style.visibility="hidden";
+        break;
+      case 16:
+        neko_next_unko = 17;
+        document.getElementById("unko_17").style.visibility="hidden";
+        break;
+      case 17:
+        neko_next_unko = 18;
+        document.getElementById("unko_18").style.visibility="hidden";
+        break;
+      case 18:
+        neko_next_unko = 19;
+        document.getElementById("unko_19").style.visibility="hidden";
+        break;
+      case 19:
+        neko_next_unko = 20;
+        document.getElementById("unko_20").style.visibility="hidden";
+        break;
+      case 20:
+        neko_next_unko = 21;
+        document.getElementById("unko_21").style.visibility="hidden";
+        break;
+      case 21:
+        neko_next_unko = 22;
+        document.getElementById("unko_22").style.visibility="hidden";
+        break;
+      case 22:
+        neko_next_unko = 23;
+        document.getElementById("unko_23").style.visibility="hidden";
+        break;
+      case 23:
+        neko_next_unko = 24;
+        document.getElementById("unko_24").style.visibility="hidden";
+        break;
+      case 24:
+        neko_next_unko = 25;
+        document.getElementById("unko_25").style.visibility="hidden";
+        break;
+      case 25:
+        neko_next_unko = 26;
+        document.getElementById("unko_26").style.visibility="hidden";
+        break;
+      case 26:
+        neko_next_unko = 27;
+        document.getElementById("unko_27").style.visibility="hidden";
+        break;
+      case 27:
+        neko_next_unko = 28;
+        document.getElementById("unko_28").style.visibility="hidden";
+        break;
+      case 28:
+        neko_next_unko = 29;
+        document.getElementById("unko_29").style.visibility="hidden";
+        break;
+      case 29:
+        neko_next_unko = 0;
+        document.getElementById("unko_30").style.visibility="hidden";
+        break;
+      default:
+        //do nothing
+        break;
+    }
+    unko_limit--;
+    uk_knt++;
+  }
+  neko_obj.left = neko_info[0];
+  neko_obj.top  = neko_info[1];
+}
+
+function turn_home(){
+  if( clean_now == 0 ){
+
+    if( neko_info[0] > 0 ){
+      neko_info[0] = neko_info[0] - 1;
+    }
+
+    if( neko_info[1] > 0 ){
+      neko_info[1] = neko_info[1] - 1;
+    }
+  }
+  neko_obj.left = neko_info[0];
+  neko_obj.top  = neko_info[1];
+}
+
+function imgClick(){
+  if(uk_now ==0){
+    uk_now = 1;
+    var timeout = setTimeout(set_UK , 800);
+  }
+}
+
+function set_UK() {
+
+  uk_now = 0; //UK終了
+
+  //UKの設置限界数を超えていない?
+  if( unko_limit < 30 ){
+    unko_limit++;
+
+  //UKの設定
+  switch(unko_cnt){
+    case 0:
+      document.getElementById("unko_1").style.visibility="visible";
+      unko_obj_1.left = myX;
+      unko_obj_1.top = myY;
+      unko_info[0][0] = myX;
+      unko_info[0][1] = myY;
+      unko_cnt = 1;
+      break;
+    case 1:
+      document.getElementById("unko_2").style.visibility="visible";
+      unko_obj_2.left = myX;
+      unko_obj_2.top = myY;
+      unko_info[1][0] = myX;
+      unko_info[1][1] = myY;
+      unko_cnt = 2;
+      break;
+    case 2:
+      document.getElementById("unko_3").style.visibility="visible";
+      unko_obj_3.left = myX;
+      unko_obj_3.top = myY;
+      unko_info[2][0] = myX;
+      unko_info[2][1] = myY;
+      unko_cnt = 3;
+      break;
+    case 3:
+      document.getElementById("unko_4").style.visibility="visible";
+      unko_obj_4.left = myX;
+      unko_obj_4.top = myY;
+      unko_info[3][0] = myX;
+      unko_info[3][1] = myY;
+      unko_cnt = 4;
+      break;
+    case 4:
+      document.getElementById("unko_5").style.visibility="visible";
+      unko_obj_5.left = myX;
+      unko_obj_5.top = myY;
+      unko_info[4][0] = myX;
+      unko_info[4][1] = myY;
+      unko_cnt = 5;
+      break;
+    case 5:
+      document.getElementById("unko_6").style.visibility="visible";
+      unko_obj_6.left = myX;
+      unko_obj_6.top = myY;
+      unko_info[5][0] = myX;
+      unko_info[5][1] = myY;
+      unko_cnt = 6;
+      break;
+    case 6:
+      document.getElementById("unko_7").style.visibility="visible";
+      unko_obj_7.left = myX;
+      unko_obj_7.top = myY;
+      unko_info[6][0] = myX;
+      unko_info[6][1] = myY;
+      unko_cnt = 7;
+      break;
+    case 7:
+      document.getElementById("unko_8").style.visibility="visible";
+      unko_obj_8.left = myX;
+      unko_obj_8.top = myY;
+      unko_info[7][0] = myX;
+      unko_info[7][1] = myY;
+      unko_cnt = 8;
+      break;
+    case 8:
+      document.getElementById("unko_9").style.visibility="visible";
+      unko_obj_9.left = myX;
+      unko_obj_9.top = myY;
+      unko_info[8][0] = myX;
+      unko_info[8][1] = myY;
+      unko_cnt = 9;
+      break;
+    case 9:
+      document.getElementById("unko_10").style.visibility="visible";
+      unko_obj_10.left = myX;
+      unko_obj_10.top = myY;
+      unko_info[9][0] = myX;
+      unko_info[9][1] = myY;
+      unko_cnt = 10;
+      break;
+    case 10:
+      document.getElementById("unko_11").style.visibility="visible";
+      unko_obj_11.left = myX;
+      unko_obj_11.top = myY;
+      unko_info[10][0] = myX;
+      unko_info[10][1] = myY;
+      unko_cnt = 11;
+      break;
+    case 11:
+      document.getElementById("unko_12").style.visibility="visible";
+      unko_obj_12.left = myX;
+      unko_obj_12.top = myY;
+      unko_info[11][0] = myX;
+      unko_info[11][1] = myY;
+      unko_cnt = 12;
+      break;
+    case 12:
+      document.getElementById("unko_13").style.visibility="visible";
+      unko_obj_13.left = myX;
+      unko_obj_13.top = myY;
+      unko_info[12][0] = myX;
+      unko_info[12][1] = myY;
+      unko_cnt = 13;
+      break;
+    case 13:
+      document.getElementById("unko_14").style.visibility="visible";
+      unko_obj_14.left = myX;
+      unko_obj_14.top = myY;
+      unko_info[13][0] = myX;
+      unko_info[13][1] = myY;
+      unko_cnt = 14;
+      break;
+    case 14:
+      document.getElementById("unko_15").style.visibility="visible";
+      unko_obj_15.left = myX;
+      unko_obj_15.top = myY;
+      unko_info[14][0] = myX;
+      unko_info[14][1] = myY;
+      unko_cnt = 15;
+      break;
+    case 15:
+      document.getElementById("unko_16").style.visibility="visible";
+      unko_obj_16.left = myX;
+      unko_obj_16.top = myY;
+      unko_info[15][0] = myX;
+      unko_info[15][1] = myY;
+      unko_cnt = 16;
+      break;
+    case 16:
+      document.getElementById("unko_17").style.visibility="visible";
+      unko_obj_17.left = myX;
+      unko_obj_17.top = myY;
+      unko_info[16][0] = myX;
+      unko_info[16][1] = myY;
+      unko_cnt = 17;
+      break;
+    case 17:
+      document.getElementById("unko_18").style.visibility="visible";
+      unko_obj_18.left = myX;
+      unko_obj_18.top = myY;
+      unko_info[17][0] = myX;
+      unko_info[17][1] = myY;
+      unko_cnt = 18;
+      break;
+    case 18:
+      document.getElementById("unko_19").style.visibility="visible";
+      unko_obj_19.left = myX;
+      unko_obj_19.top = myY;
+      unko_info[18][0] = myX;
+      unko_info[18][1] = myY;
+      unko_cnt = 19;
+      break;
+    case 19:
+      document.getElementById("unko_20").style.visibility="visible";
+      unko_obj_20.left = myX;
+      unko_obj_20.top = myY;
+      unko_info[19][0] = myX;
+      unko_info[19][1] = myY;
+      unko_cnt = 20;
+      break;
+    case 20:
+      document.getElementById("unko_21").style.visibility="visible";
+      unko_obj_21.left = myX;
+      unko_obj_21.top = myY;
+      unko_info[20][0] = myX;
+      unko_info[20][1] = myY;
+      unko_cnt = 21;
+      break;
+    case 21:
+      document.getElementById("unko_22").style.visibility="visible";
+      unko_obj_22.left = myX;
+      unko_obj_22.top = myY;
+      unko_info[21][0] = myX;
+      unko_info[21][1] = myY;
+      unko_cnt = 22;
+      break;
+    case 22:
+      document.getElementById("unko_23").style.visibility="visible";
+      unko_obj_23.left = myX;
+      unko_obj_23.top = myY;
+      unko_info[22][0] = myX;
+      unko_info[22][1] = myY;
+      unko_cnt = 23;
+      break;
+    case 23:
+      document.getElementById("unko_24").style.visibility="visible";
+      unko_obj_24.left = myX;
+      unko_obj_24.top = myY;
+      unko_info[23][0] = myX;
+      unko_info[23][1] = myY;
+      unko_cnt = 24;
+      break;
+    case 24:
+      document.getElementById("unko_25").style.visibility="visible";
+      unko_obj_25.left = myX;
+      unko_obj_25.top = myY;
+      unko_info[24][0] = myX;
+      unko_info[24][1] = myY;
+      unko_cnt = 25;
+      break;
+    case 25:
+      document.getElementById("unko_26").style.visibility="visible";
+      unko_obj_26.left = myX;
+      unko_obj_26.top = myY;
+      unko_info[25][0] = myX;
+      unko_info[25][1] = myY;
+      unko_cnt = 26;
+      break;
+    case 26:
+      document.getElementById("unko_27").style.visibility="visible";
+      unko_obj_27.left = myX;
+      unko_obj_27.top = myY;
+      unko_info[26][0] = myX;
+      unko_info[26][1] = myY;
+      unko_cnt = 27;
+      break;
+    case 27:
+      document.getElementById("unko_28").style.visibility="visible";
+      unko_obj_28.left = myX;
+      unko_obj_28.top = myY;
+      unko_info[27][0] = myX;
+      unko_info[27][1] = myY;
+      unko_cnt = 28;
+      break;
+    case 28:
+      document.getElementById("unko_29").style.visibility="visible";
+      unko_obj_29.left = myX;
+      unko_obj_29.top = myY;
+      unko_info[28][0] = myX;
+      unko_info[28][1] = myY;
+      unko_cnt = 29;
+      break;
+    case 29:
+      document.getElementById("unko_30").style.visibility="visible";
+      unko_obj_30.left = myX;
+      unko_obj_30.top = myY;
+      unko_info[29][0] = myX;
+      unko_info[29][1] = myY;
+      unko_cnt = 0;
+      break;
+    default:
+      //do nothing
+      break;
+    }
+  }
+}
+
+</script>
+<DIV id="unko_1" STYLE="position:absolute"><img src="uk.png" width="200" height="200"></DIV>
+<DIV id="unko_2" STYLE="position:absolute"><img src="uk.png" width="200" height="200"></DIV>
+<DIV id="unko_3" STYLE="position:absolute"><img src="uk.png" width="200" height="200"></DIV>
+<DIV id="unko_4" STYLE="position:absolute"><img src="uk.png" width="200" height="200"></DIV>
+<DIV id="unko_5" STYLE="position:absolute"><img src="uk.png" width="200" height="200"></DIV>
+<DIV id="unko_6" STYLE="position:absolute"><img src="uk.png" width="200" height="200"></DIV>
+<DIV id="unko_7" STYLE="position:absolute"><img src="uk.png" width="200" height="200"></DIV>
+<DIV id="unko_8" STYLE="position:absolute"><img src="uk.png" width="200" height="200"></DIV>
+<DIV id="unko_9" STYLE="position:absolute"><img src="uk.png" width="200" height="200"></DIV>
+<DIV id="unko_10" STYLE="position:absolute"><img src="uk.png" width="200" height="200"></DIV>
+<DIV id="unko_11" STYLE="position:absolute"><img src="uk.png" width="200" height="200"></DIV>
+<DIV id="unko_12" STYLE="position:absolute"><img src="uk.png" width="200" height="200"></DIV>
+<DIV id="unko_13" STYLE="position:absolute"><img src="uk.png" width="200" height="200"></DIV>
+<DIV id="unko_14" STYLE="position:absolute"><img src="uk.png" width="200" height="200"></DIV>
+<DIV id="unko_15" STYLE="position:absolute"><img src="uk.png" width="200" height="200"></DIV>
+<DIV id="unko_16" STYLE="position:absolute"><img src="uk.png" width="200" height="200"></DIV>
+<DIV id="unko_17" STYLE="position:absolute"><img src="uk.png" width="200" height="200"></DIV>
+<DIV id="unko_18" STYLE="position:absolute"><img src="uk.png" width="200" height="200"></DIV>
+<DIV id="unko_19" STYLE="position:absolute"><img src="uk.png" width="200" height="200"></DIV>
+<DIV id="unko_20" STYLE="position:absolute"><img src="uk.png" width="200" height="200"></DIV>
+<DIV id="unko_21" STYLE="position:absolute"><img src="uk.png" width="200" height="200"></DIV>
+<DIV id="unko_22" STYLE="position:absolute"><img src="uk.png" width="200" height="200"></DIV>
+<DIV id="unko_23" STYLE="position:absolute"><img src="uk.png" width="200" height="200"></DIV>
+<DIV id="unko_24" STYLE="position:absolute"><img src="uk.png" width="200" height="200"></DIV>
+<DIV id="unko_25" STYLE="position:absolute"><img src="uk.png" width="200" height="200"></DIV>
+<DIV id="unko_26" STYLE="position:absolute"><img src="uk.png" width="200" height="200"></DIV>
+<DIV id="unko_27" STYLE="position:absolute"><img src="uk.png" width="200" height="200"></DIV>
+<DIV id="unko_28" STYLE="position:absolute"><img src="uk.png" width="200" height="200"></DIV>
+<DIV id="unko_29" STYLE="position:absolute"><img src="uk.png" width="200" height="200"></DIV>
+<DIV id="unko_30" STYLE="position:absolute"><img src="uk.png" width="200" height="200"></DIV>
+<DIV id="neko" STYLE="position:absolute" ><img id="neko_img" src="cat/0.png" width="200" height="200" ></DIV>
+<DIV id="tama" STYLE="position:absolute" onclick="imgClick()"><img id="tama_img"src="dog/0.gif"   width="200" height="200" border="0" alt=""></DIV>
+
+
+<script type="text/javascript">
+      setInterval( "myTamaMain()", 10 ); // 0.01秒周期に動かす
+</script>
+
+</body>
+</html>
